@@ -1,0 +1,1 @@
+  * see [Patterns for decoding and validating input in Go data APIs](https://medium.com/@matryer/patterns-for-decoding-and-validating-input-in-go-data-apis-152291ac7372)
