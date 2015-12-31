@@ -24,3 +24,12 @@ _testmain.go
 *.prof
 
 mongodb-in-go/commentsapp/db
+command-line-piping/cmds/fib
+
+command-line-piping/cmds/mean
+
+command-line-piping/cmds/split
+
+command-line-piping/cmds/sum
+
+app/app
