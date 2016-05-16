@@ -31,34 +31,25 @@ type RestDeleter interface {
 }
 
 func Route(path string, controller interface{}, router Router) {
-	var n int
 	if c, ok := controller.(RestReader); ok {
 		router.Route(path+"/{id}", "GET", http.HandlerFunc(c.Read))
-		n++
 	}
 	if c, ok := controller.(RestManyReader); ok {
 		router.Route(path, "GET", http.HandlerFunc(c.ReadMany))
-		n++
 	}
 	if c, ok := controller.(RestCreator); ok {
 		router.Route(path, "POST", http.HandlerFunc(c.Create))
-		n++
 	}
 	if c, ok := controller.(RestDeleter); ok {
 		router.Route(path+"/{id}", "DELETE", http.HandlerFunc(c.Delete))
-		n++
 	}
 	if c, ok := controller.(RestReplacer); ok {
 		router.Route(path+"/{id}", "PUT", http.HandlerFunc(c.Replace))
-		n++
 	}
 	if c, ok := controller.(RestUpdater); ok {
 		router.Route(path+"/{id}", "PATH", http.HandlerFunc(c.Update))
-		n++
 	}
-	if n == 0 {
-		panic("rest: controller has no suitable methods")
-	}
+	router.Route(path, "*", http.NotFoundHandler())
 }
 
 type PresentsController struct{}
