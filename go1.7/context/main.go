@@ -2,39 +2,48 @@ package main
 
 import (
 	"context"
-	"fmt"
-	"io"
+	"log"
 	"net/http"
+
+	"gopkg.in/mgo.v2"
 )
 
 func main() {
-	greeter := &Greeter{Format: "Hello %s"}
-	http.Handle("/", greeter.Handler(http.HandlerFunc(handle)))
+	db, err := mgo.Dial("localhost")
+	if err != nil {
+		log.Fatalln(err)
+	}
+	defer db.Close()
+	http.Handle("/", WithDBSession(db, http.HandlerFunc(handle)))
 	http.ListenAndServe(":8080", nil)
 }
 
-func handle(w http.ResponseWriter, req *http.Request) {
-	greeter := GetGreeter(req)
-	io.WriteString(w, greeter.Greet(req.URL.Query().Get("name")))
+func handle(w http.ResponseWriter, r *http.Request) {
+	session := GetDBSession(r)
+	// TODO: do something with the database session
 }
 
-var ContextKeyGreeter = struct{}{}
-
-type Greeter struct {
-	Format string
+type contextKey struct {
+	name string
 }
 
-func (g *Greeter) Greet(name string) string {
-	return fmt.Sprintf(g.Format, name)
+func (c *contextKey) String() string {
+	return "context value " + c.name
 }
 
-func (g *Greeter) Handler(h http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		ctx := context.WithValue(req.Context(), ContextKeyGreeter, g)
-		h.ServeHTTP(w, req.WithContext(ctx))
+var contextKeyDBSession = &contextKey{"database-session"}
+
+// GetDBSession gets the mgo.Session for the given Request.
+// Handlers must be wrapped with WithDBSession.
+func GetDBSession(r *http.Request) *mgo.Session {
+	return r.Context().Value(contextKeyDBSession).(*mgo.Session)
+}
+
+func WithDBSession(db *mgo.Session, h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		dbSessionCopy := db.Copy()
+		defer dbSessionCopy.Close()
+		ctx := context.WithValue(r.Context(), contextKey{""}, dbSessionCopy)
+		h.ServeHTTP(w, r.WithContext(ctx))
 	})
-}
-
-func GetGreeter(req *http.Request) *Greeter {
-	return req.Context().Value(ContextKeyGreeter).(*Greeter)
 }
