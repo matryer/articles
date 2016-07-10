@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"log"
 	"net/http"
 
@@ -14,12 +15,12 @@ func main() {
 		log.Fatalln(err)
 	}
 	defer db.Close()
-	http.Handle("/", WithAuth(http.HandlerFunc(handle)))
+	http.Handle("/", WithAuth(db, http.HandlerFunc(handle)))
 	http.ListenAndServe(":8080", nil)
 }
 
 func handle(w http.ResponseWriter, r *http.Request) {
-	token := GetAuthToken(r)
+	token, err := GetAuthToken(r)
 	// TODO: do something with the token
 }
 
@@ -35,13 +36,20 @@ var contextKeyAuthToken = &contextKey{"authtoken"}
 
 // GetSomething gets the something for the given Request.
 // Handlers must be wrapped with WithSomething.
-func GetAuthToken(r *http.Request) string {
-	return r.Context().Value(contextKeyAuthToken).(string)
+func GetAuthToken(r *http.Request) (string, error) {
+	authTokenVal := r.Context().Value(contextKeyAuthToken)
+	authTokenStr, ok := authTokenVal.(string)
+	if !ok {
+		return "", errors.New("missing authorization token")
+	}
+	return authTokenStr, nil
 }
-
-func WithAuth(h http.Handler) http.Handler {
+, e
+func WithAuth(db *db.Session, h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		authtoken, err := verifyAuthHeader(r.Header.Get("Authorization"))
+		dbsession := db.Copy()
+		defer dbsession.Close()
+		authtoken, err := verifyAuthHeader(dbsession, r.Header.Get("Authorization"))
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusUnauthorized)
 			return
