@@ -43,7 +43,7 @@ func WithDBSession(db *mgo.Session, h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		dbSessionCopy := db.Copy()
 		defer dbSessionCopy.Close()
-		ctx := context.WithValue(r.Context(), contextKey{""}, dbSessionCopy)
+		ctx := context.WithValue(r.Context(), contextKeyDBSession, dbSessionCopy)
 		h.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
