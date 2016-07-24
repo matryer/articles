@@ -19,3 +19,7 @@ func main() {
 	log.Println(" first key", ctx.Value(contextKeyOne))
 	log.Println("second key", ctx.Value(contextKeyTwo))
 }
+
+// Output:
+// 2016/07/24 14:44:40  first key two
+// 2016/07/24 14:44:40 second key two
