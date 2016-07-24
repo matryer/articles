@@ -1,9 +1,8 @@
 package main
 
 import (
+	"context"
 	"log"
-
-	"golang.org/x/net/context"
 )
 
 type contextKey string
