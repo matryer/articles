@@ -26,6 +26,12 @@ func (r Savers) Save() error {
 	return nil
 }
 
+type SaverFunc func() error
+
+func (fn SaverFunc) Save() error {
+	return fn()
+}
+
 func x() {
 	records := Savers{&Record{}, &Record{}, &Record{}}
 	records.Save()
